@@ -1,0 +1,187 @@
+- name: NonprofitSettings
+  label: Nonprofit Settings
+  kind: settings
+  module: nonprofit
+  description: "Where donations are posted and memberships invoiced from."
+  fields:
+    - {name: company, type: link, to: Company, required: true}
+    - {name: deposit_account, type: link, to: Account, required: true, label: Donations Received Into, description: "The bank or cash account a donation is received into"}
+    - {name: donation_income_account, type: link, to: Account, required: true, label: Donation Income, description: "The income account donations are credited to"}
+  form:
+    - {label: Books, fields: [company, deposit_account, donation_income_account]}
+
+- name: MembershipType
+  label: Membership Type
+  label_plural: Membership Types
+  kind: master
+  module: nonprofit
+  title_field: membership_type_name
+  fields:
+    - {name: membership_type_name, type: data, required: true, in_list: true}
+    - {name: amount, type: currency, required: true, in_list: true}
+    - {name: months, type: int, default: 12, min: 1, max: 120, required: true, in_list: true, description: "How long one membership lasts"}
+    - {name: item, type: link, to: Item, required: true, description: "What a membership is invoiced as"}
+  list: {columns: [membership_type_name, amount, months], sort: membership_type_name asc}
+
+- name: Member
+  label: Member
+  label_plural: Members
+  kind: master
+  module: nonprofit
+  title_field: member_name
+  search_fields: [email]
+  description: Someone who belongs. A member is active while a paid membership covers today.
+  fields:
+    - {name: member_name, type: data, required: true, in_list: true}
+    - {name: email, type: email, in_list: true}
+    - {name: phone, type: phone}
+    - {name: membership_type, type: link, to: MembershipType, in_list: true, in_filter: true}
+    - {name: customer, type: link, to: Customer, description: "Who membership invoices go to; made from the member when empty"}
+    - {name: status, type: select, options: [Applicant, Active, Lapsed], default: Applicant, read_only: true, no_copy: true, in_list: true, in_filter: true}
+    - {name: member_since, type: date, read_only: true, no_copy: true}
+    - {name: expires_on, type: date, read_only: true, no_copy: true, in_list: true}
+    - {name: notes, type: text}
+  numbering: {template: "MEM-{YYYY}-{seq:5}"}
+  form:
+    - {label: Member, fields: [member_name, email, phone, membership_type, customer]}
+    - {label: Membership, fields: [status, member_since, expires_on]}
+    - {label: Notes, collapsible: true, fields: [notes]}
+  list: {columns: [number, member_name, membership_type, status, expires_on], sort: member_name asc}
+
+- name: Membership
+  label: Membership
+  label_plural: Memberships
+  kind: master
+  module: nonprofit
+  title_field: member
+  description: One term of a member's membership. Invoiced through ERP; it counts once its invoice is paid.
+  fields:
+    - {name: member, type: link, to: Member, required: true, in_list: true, in_filter: true}
+    - {name: membership_type, type: link, to: MembershipType, required: true, in_list: true}
+    - {name: from_date, type: date, required: true, in_list: true}
+    - {name: to_date, type: date, read_only: true, in_list: true}
+    - {name: amount, type: currency, read_only: true, in_list: true}
+    - {name: status, type: select, options: [Draft, Invoiced, Paid, Cancelled], default: Draft, read_only: true, no_copy: true, in_list: true, in_filter: true}
+    - {name: sales_invoice, type: link, to: SalesInvoice, read_only: true, no_copy: true}
+    - {name: paid_on, type: date, read_only: true, no_copy: true}
+  actions:
+    - {name: make_invoice, label: Invoice It, permission: write, condition: "doc.status == 'Draft'"}
+    - {name: cancel_membership, label: Cancel It, permission: write, condition: "doc.status == 'Draft' || doc.status == 'Invoiced'"}
+  numbering: {template: "MSP-{YYYY}-{seq:5}"}
+  list: {columns: [number, member, membership_type, from_date, to_date, status], sort: from_date desc}
+
+- name: Donor
+  label: Donor
+  label_plural: Donors
+  kind: master
+  module: nonprofit
+  title_field: donor_name
+  search_fields: [email]
+  fields:
+    - {name: donor_name, type: data, required: true, in_list: true}
+    - {name: donor_type, type: select, options: [Individual, Organization, Foundation, Government], default: Individual, in_list: true, in_filter: true}
+    - {name: email, type: email, in_list: true}
+    - {name: tax_id, type: data, label: Tax ID, description: "For tax receipts, where the law asks for one"}
+    - {name: total_given, type: currency, read_only: true, no_copy: true, in_list: true}
+  list: {columns: [donor_name, donor_type, email, total_given], sort: donor_name asc}
+
+- name: Fund
+  label: Fund
+  label_plural: Funds
+  kind: master
+  module: nonprofit
+  title_field: fund_name
+  description: Money given for a purpose. A restricted fund's donations are kept apart for it.
+  fields:
+    - {name: fund_name, type: data, required: true, in_list: true}
+    - {name: restricted, type: check, in_list: true}
+    - {name: purpose, type: text}
+    - {name: received, type: currency, read_only: true, no_copy: true, in_list: true}
+  list: {columns: [fund_name, restricted, received], sort: fund_name asc}
+
+- name: Donation
+  label: Donation
+  label_plural: Donations
+  kind: document
+  submittable: true
+  module: nonprofit
+  title_field: donor
+  description: A gift received. Submitting it posts it to the books (a journal entry); cancelling it reverses that.
+  fields:
+    - {name: donor, type: link, to: Donor, required: true, in_list: true, in_filter: true}
+    - {name: date, type: date, required: true, in_list: true}
+    - {name: amount, type: currency, required: true, in_list: true}
+    - {name: fund, type: link, to: Fund, in_list: true, in_filter: true}
+    - {name: grant, type: link, to: Grant, description: "When it is a grant's payment"}
+    - {name: mode, type: data, label: How It Was Given}
+    - {name: reference, type: data}
+    - {name: journal_entry, type: link, to: JournalEntry, read_only: true, no_copy: true}
+    - {name: note, type: text}
+  numbering: {template: "DON-{YYYY}-{seq:5}"}
+  list: {columns: [number, donor, date, amount, fund], sort: date desc}
+
+- name: Grant
+  label: Grant
+  label_plural: Grants
+  kind: master
+  module: nonprofit
+  title_field: title
+  description: Money a funder is asked for, awards or declines, and what is owed back to them.
+  fields:
+    - {name: title, type: data, required: true, in_list: true}
+    - {name: funder, type: link, to: Donor, required: true, in_list: true, in_filter: true}
+    - {name: fund, type: link, to: Fund}
+    - {name: requested, type: currency, required: true, in_list: true}
+    - {name: awarded, type: currency, in_list: true}
+    - {name: received, type: currency, read_only: true, no_copy: true, in_list: true}
+    - {name: status, type: select, options: [Draft, Submitted, Awarded, Declined, Closed], default: Draft, required: true, in_list: true, in_filter: true}
+    - {name: submitted_on, type: date}
+    - {name: decided_on, type: date}
+    - {name: reports, type: table, of: GrantReport, label: Reports Owed}
+    - {name: notes, type: text}
+  list: {columns: [title, funder, requested, awarded, received, status], sort: created_at desc}
+
+- name: GrantReport
+  label: Report
+  kind: child
+  fields:
+    - {name: due_on, type: date, required: true, in_list: true}
+    - {name: report, type: data, required: true, in_list: true}
+    - {name: sent_on, type: date, in_list: true}
+
+- name: Volunteer
+  label: Volunteer
+  label_plural: Volunteers
+  kind: master
+  module: nonprofit
+  title_field: volunteer_name
+  search_fields: [email]
+  fields:
+    - {name: volunteer_name, type: data, required: true, in_list: true}
+    - {name: email, type: email, in_list: true}
+    - {name: phone, type: phone}
+    - {name: active, type: check, default: true, in_list: true, in_filter: true}
+    - {name: skills, type: table, of: VolunteerSkill}
+    - {name: availability, type: select, options: [Weekdays, Weekends, Evenings, Any Time]}
+    - {name: hours, type: decimal, read_only: true, no_copy: true, in_list: true, label: Approved Hours}
+  list: {columns: [volunteer_name, email, active, hours], sort: volunteer_name asc}
+
+- name: VolunteerSkill
+  label: Skill
+  kind: child
+  fields:
+    - {name: skill, type: data, required: true, in_list: true}
+
+- name: VolunteerShift
+  label: Volunteer Shift
+  label_plural: Volunteer Shifts
+  kind: master
+  module: nonprofit
+  title_field: activity
+  fields:
+    - {name: volunteer, type: link, to: Volunteer, required: true, in_list: true, in_filter: true}
+    - {name: date, type: date, required: true, in_list: true}
+    - {name: hours, type: decimal, required: true, in_list: true}
+    - {name: activity, type: data, required: true, in_list: true}
+    - {name: approved, type: check, in_list: true, in_filter: true, description: "Counted in the volunteer's hours once approved"}
+  list: {columns: [volunteer, date, activity, hours, approved], sort: date desc}

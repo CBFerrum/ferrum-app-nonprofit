@@ -1,0 +1,53 @@
+package: nonprofit
+version: 0.1.0
+label: Nonprofit
+description: "Members and memberships, donors and donations posted to the books, funds, grants and volunteers"
+depends: [core, selling, accounting]
+
+modules:
+  - name: nonprofit
+    label: Nonprofit
+    icon: hand-heart
+    order: 49
+    items: [Member, Membership, Donation, Donor, Fund, Grant, Volunteer, VolunteerShift, MembershipType, NonprofitSettings]
+
+# What a personal-data request exports and erases (the person's email): how to reach them and what
+# they wrote; amounts and dates stay, as the books need them.
+personal_data:
+  - {entity: Member, match: email, erase: [member_name, email, phone, notes]}
+  - {entity: Donor, match: email, erase: [donor_name, email, tax_id]}
+  - {entity: Volunteer, match: email, erase: [volunteer_name, email, phone]}
+
+roles:
+  - name: Nonprofit Manager
+    description: Runs members, donations, grants and volunteers, and the settings.
+    permissions:
+      - {entity: NonprofitSettings, read: true, write: true, create: true}
+      - {entity: MembershipType, read: true, write: true, create: true, delete: true}
+      - {entity: Member, read: true, write: true, create: true, delete: true, export: true, import: true}
+      - {entity: Membership, read: true, write: true, create: true, export: true}
+      - {entity: Donor, read: true, write: true, create: true, export: true, import: true}
+      - {entity: Fund, read: true, write: true, create: true}
+      - {entity: Donation, read: true, write: true, create: true, submit: true, cancel: true, export: true}
+      - {entity: Grant, read: true, write: true, create: true, delete: true, export: true}
+      - {entity: Volunteer, read: true, write: true, create: true, delete: true, export: true}
+      - {entity: VolunteerShift, read: true, write: true, create: true, delete: true, export: true}
+      - {entity: Customer, read: true, write: true, create: true}
+      - {entity: Item, read: true}
+      - {entity: Company, read: true}
+      - {entity: Account, read: true}
+      - {entity: SalesInvoice, read: true, create: true}
+      - {entity: JournalEntry, read: true}
+  - name: Fundraiser
+    description: Records donors and donations and keeps grants; sees members.
+    permissions:
+      - {entity: Member, read: true}
+      - {entity: Donor, read: true, write: true, create: true}
+      - {entity: Fund, read: true}
+      - {entity: Donation, read: true, write: true, create: true, submit: true}
+      - {entity: Grant, read: true, write: true, create: true}
+  - name: Volunteer Coordinator
+    description: Keeps volunteers and their shifts, and approves hours.
+    permissions:
+      - {entity: Volunteer, read: true, write: true, create: true}
+      - {entity: VolunteerShift, read: true, write: true, create: true, delete: true}
