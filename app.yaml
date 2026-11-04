@@ -1,0 +1,33 @@
+id: nonprofit
+name: Nonprofit
+version: 0.1.0
+publisher: cbferrum
+summary: "Members and memberships, donors and donations posted to the books, funds, grants and volunteers"
+description: README.md
+categories: [finance, industry]
+license: AGPL-3.0-only
+homepage: https://github.com/CBFerrum/ferrum-app-nonprofit
+support: https://github.com/CBFerrum/ferrum-app-nonprofit/issues
+runtime: native
+platform: ">=0.3.2, <0.4"
+# Records of ERP (customers, items, invoices, the ledger): installing it installs ERP.
+requires: {erp: ">=0.1"}
+packages: [nonprofit]
+uninstall: ask
+# Its own interface at /nonprofit/: who belongs and who gave, and the records (ui/, built into ui/dist).
+ui:
+  dist: ui/dist
+contributes:
+  shell.app:
+    - id: nonprofit
+      route: nonprofit
+      title: Nonprofit
+      description: Members, donations, grants and volunteers
+      icon: hand-heart
+      color: "#be185d"
+      roles: [Nonprofit Manager, Fundraiser, Volunteer Coordinator]
+  shell.open:
+    - {id: nonprofit, package: nonprofit, path: "nonprofit/e/{entity}/{id}", list: "nonprofit/e/{entity}"}
+  shell.create:
+    - {id: donation, label: Donation, path: nonprofit/e/Donation/new, entity: Donation}
+    - {id: member, label: Member, path: nonprofit/e/Member/new, entity: Member}
