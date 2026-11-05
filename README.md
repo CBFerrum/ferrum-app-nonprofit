@@ -52,6 +52,7 @@ cd ui && npm run build && npm run check
 
 | Version | Highlights |
 |---|---|
+| **0.1.3** | Personal-data requests find member, volunteer records by the person's phone number as well as their email, and list the donor, member, volunteer records … |
 | **0.1.2** | Rebuilt with Ferrum-Frontend daeadda: actions say what they did. |
 | **0.1.1** | Rebuilt with Ferrum-Frontend 80ff179: labels name their fields, and linked titles show their titles. |
 | **0.1.0** | Members and memberships, donors and donations posted to the books, funds, grants and volunteers (FERRUM-INDUSTRY-011). |
