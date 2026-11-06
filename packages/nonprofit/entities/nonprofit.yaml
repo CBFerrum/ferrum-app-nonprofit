@@ -58,7 +58,7 @@
   fields:
     - {name: member, type: link, to: Member, required: true, in_list: true, in_filter: true}
     - {name: membership_type, type: link, to: MembershipType, required: true, in_list: true}
-    - {name: from_date, type: date, required: true, in_list: true}
+    - {name: from_date, type: date, required: true, default_expr: today, in_list: true}
     - {name: to_date, type: date, read_only: true, in_list: true}
     - {name: amount, type: currency, read_only: true, in_list: true}
     - {name: status, type: select, options: [Draft, Invoiced, Paid, Cancelled], default: Draft, read_only: true, no_copy: true, in_list: true, in_filter: true}
@@ -109,7 +109,7 @@
   description: A gift received. Submitting it posts it to the books (a journal entry); cancelling it reverses that.
   fields:
     - {name: donor, type: link, to: Donor, required: true, in_list: true, in_filter: true}
-    - {name: date, type: date, required: true, in_list: true}
+    - {name: date, type: date, required: true, default_expr: today, in_list: true}
     - {name: amount, type: currency, required: true, in_list: true}
     - {name: fund, type: link, to: Fund, in_list: true, in_filter: true}
     - {name: grant, type: link, to: Grant, description: "When it is a grant's payment"}
@@ -180,7 +180,7 @@
   title_field: activity
   fields:
     - {name: volunteer, type: link, to: Volunteer, required: true, in_list: true, in_filter: true}
-    - {name: date, type: date, required: true, in_list: true}
+    - {name: date, type: date, required: true, default_expr: today, in_list: true}
     - {name: hours, type: decimal, required: true, in_list: true}
     - {name: activity, type: data, required: true, in_list: true}
     - {name: approved, type: check, in_list: true, in_filter: true, description: "Counted in the volunteer's hours once approved"}
