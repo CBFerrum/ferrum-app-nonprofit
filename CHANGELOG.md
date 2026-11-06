@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.8
+
+What walking a year's giving through the pages found:
+- The home page's figures were counted and added over one list of at most 500 records (it asked for 1,000; the server pages at 500). A larger organisation saw a short "Given in" and short member counts. Members are now counted, and donations and hours added over every page.
+- "Given in" took the browser's year; it now takes the workspace's.
+- A member invoiced but not yet paid was in no figure. "Members not yet paid" counts them.
+- Before the books are named, the home page says to name them in Nonprofit Settings first, since donations post there.
+- New memberships, donations and volunteer shifts are dated today unless another day is chosen.
+
 ## 0.1.7
 
 Rebuilt with Ferrum-Frontend a76295e: its pages show times on a person's own clock when they chose one on their Account page, while today and due dates stay on the workspace's day.
