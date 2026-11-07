@@ -26,7 +26,7 @@ roles:
       - {entity: MembershipType, read: true, write: true, create: true, delete: true}
       - {entity: Member, read: true, write: true, create: true, delete: true, export: true, import: true}
       - {entity: Membership, read: true, write: true, create: true, export: true}
-      - {entity: Donor, read: true, write: true, create: true, export: true, import: true}
+      - {entity: Donor, read: true, write: true, create: true, export: true, import: true, read_groups: [identity], write_groups: [identity]}
       - {entity: Fund, read: true, write: true, create: true}
       - {entity: Donation, read: true, write: true, create: true, submit: true, cancel: true, export: true}
       - {entity: Grant, read: true, write: true, create: true, delete: true, export: true}
@@ -42,7 +42,7 @@ roles:
     description: Records donors and donations and keeps grants; sees members.
     permissions:
       - {entity: Member, read: true}
-      - {entity: Donor, read: true, write: true, create: true}
+      - {entity: Donor, read: true, write: true, create: true, read_groups: [identity], write_groups: [identity]}
       - {entity: Fund, read: true}
       - {entity: Donation, read: true, write: true, create: true, submit: true}
       - {entity: Grant, read: true, write: true, create: true}
