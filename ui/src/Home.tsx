@@ -4,7 +4,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
-import { api, docPath, todayIso, t } from "@ferrum/client";
+import { api, docPath, todayIso, t, isolate } from "@ferrum/client";
 import { EmptyState, ErrorState, PageLoading, useShellTitle } from "@ferrum/kit";
 
 interface Row {
@@ -39,7 +39,7 @@ const count = (entity: string, filters: unknown[]) => page(entity, filters, { fi
 export const sum = (list: Row[], field: string) => list.reduce((acc, r) => acc + Number(r[field] ?? 0), 0);
 
 export function Home() {
-  useShellTitle("Nonprofit");
+  useShellTitle(t("Nonprofit"));
   const year = todayIso().slice(0, 4);
   const q = useQuery({
     queryKey: ["nonprofit", "home", year],
@@ -70,20 +70,20 @@ export function Home() {
       </div>
     );
   const figures: { label: string; value: string; to: string }[] = [
-    { label: "Active members", value: String(active), to: "/e/Member" },
-    { label: "Members not yet paid", value: String(unpaid), to: "/e/Member" },
-    { label: "Lapsed members", value: String(lapsed), to: "/e/Member" },
-    { label: `Given in ${year}`, value: sum(donations, "amount").toLocaleString(undefined, { maximumFractionDigits: 2 }), to: "/e/Donation" },
-    { label: "Grants awaiting or awarded", value: String(grants), to: "/e/Grant" },
-    { label: "Volunteers' approved hours", value: sum(volunteers, "hours").toLocaleString(), to: "/e/Volunteer" },
+    { label: t("Active members"), value: String(active), to: "/e/Member" },
+    { label: t("Members not yet paid"), value: String(unpaid), to: "/e/Member" },
+    { label: t("Lapsed members"), value: String(lapsed), to: "/e/Member" },
+    { label: t("Given in {year}", { year }), value: sum(donations, "amount").toLocaleString(undefined, { maximumFractionDigits: 2 }), to: "/e/Donation" },
+    { label: t("Grants awaiting or awarded"), value: String(grants), to: "/e/Grant" },
+    { label: t("Volunteers' approved hours"), value: sum(volunteers, "hours").toLocaleString(), to: "/e/Volunteer" },
   ];
   return (
     <div className="np-page">
       <div className="np-columns">
         {figures.map((f) => (
           <Link key={f.label} to={f.to} className="card card-pad stack">
-            <span className="muted">{f.label}</span>
-            <strong style={{ fontSize: 28 }}>{f.value}</strong>
+            <span className="muted">{isolate(f.label)}</span>
+            <strong style={{ fontSize: 28 }}>{isolate(f.value)}</strong>
           </Link>
         ))}
       </div>
