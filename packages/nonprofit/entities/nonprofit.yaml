@@ -81,7 +81,7 @@
     - {name: donor_name, type: data, required: true, in_list: true}
     - {name: donor_type, type: select, options: [Individual, Organization, Foundation, Government], default: Individual, in_list: true, in_filter: true}
     - {name: email, type: email, in_list: true}
-    - {name: tax_id, type: data, label: Tax ID, description: "For tax receipts, where the law asks for one"}
+    - {name: tax_id, type: data, label: Tax ID, description: "For tax receipts, where the law asks for one", perm_group: identity}
     - {name: total_given, type: currency, read_only: true, no_copy: true, in_list: true}
   list: {columns: [donor_name, donor_type, email, total_given], sort: donor_name asc}
 

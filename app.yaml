@@ -1,6 +1,6 @@
 id: nonprofit
 name: Nonprofit
-version: 0.1.13
+version: 0.1.14
 publisher: cbferrum
 summary: "Members and memberships, donors and donations posted to the books, funds, grants and volunteers"
 description: README.md
@@ -31,3 +31,16 @@ contributes:
   shell.create:
     - {id: donation, label: Donation, path: nonprofit/e/Donation/new, entity: Donation}
     - {id: member, label: Member, path: nonprofit/e/Member/new, entity: Member}
+  # What the assistant should know in Nonprofit's pages, and what it suggests asking there.
+  shell.assistant:
+    - id: nonprofit
+      title: "Nonprofit"
+      instructions: >-
+        A Member (Applicant, Active, Lapsed) holds a Membership of a type (Draft, Invoiced, Paid, Cancelled). A
+        Donation from a Donor is posted to the books, to a Fund when it is restricted. A Grant is Draft, Submitted,
+        Awarded, Declined or Closed, with its reports due. Volunteers sign up for shifts by their skills.
+      suggestions:
+        - "How much did we raise this year, by fund?"
+        - "Which memberships lapse next month?"
+        - "Which grant reports are due?"
+        - "Which volunteer shifts still need people?"
