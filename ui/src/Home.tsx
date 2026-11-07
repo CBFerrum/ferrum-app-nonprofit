@@ -4,7 +4,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
-import { api, docPath, todayIso } from "@ferrum/client";
+import { api, docPath, todayIso, t } from "@ferrum/client";
 import { EmptyState, ErrorState, PageLoading, useShellTitle } from "@ferrum/kit";
 
 interface Row {
@@ -62,10 +62,9 @@ export function Home() {
   if (!named)
     return (
       <div className="np-page">
-        <EmptyState title="Name the books first" icon="settings">
+        <EmptyState title={t("Name the books first")} icon="settings">
           <p className="muted">
-            Donations post to the books and memberships are invoiced from a company: set the company, the account donations are received into and the
-            income they are credited to in <Link to="/e/NonprofitSettings">Nonprofit Settings</Link>.
+            {t("Donations post to the books and memberships are invoiced from a company: set the company, the account donations are received into and the income they are credited to in")} <Link to="/e/NonprofitSettings">{t("Nonprofit Settings")}</Link>.
           </p>
         </EmptyState>
       </div>
