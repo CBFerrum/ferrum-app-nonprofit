@@ -11,6 +11,7 @@ use ferrum_kernel::tenant::NewTenant;
 use ferrum_kernel::{Ctx, Db, DbConfig, Doc, Error, HookRegistry, Kernel, KernelSettings, ListQuery};
 use ferrum_meta::Catalog;
 use serde_json::{Value, json};
+use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -94,6 +95,9 @@ async fn scenario() {
     ferrum_domain::register(&mut hooks);
     ferrum_app_erp::register(&mut hooks);
     ferrum_app_nonprofit::register(&mut hooks);
+    for source in ferrum_app_nonprofit::reports() {
+        ferrum_domain::reports::add_source(source);
+    }
     let settings = KernelSettings { secret_key: Some(SecretKey::new([7u8; 32])), ..Default::default() };
     let k = Kernel::boot(db, catalog, hooks, settings, None).await.expect("boot");
     ferrum_domain::maintenance(&k).await.expect("partitions");
@@ -179,7 +183,27 @@ async fn scenario() {
     let foundation =
         uid(&t.insert(&raiser, "Donor", json!({"donor_name": "Mehta Foundation", "donor_type": "Foundation", "email": "grants@mehta.test"})).await["id"]);
     let bo = uid(&t.insert(&raiser, "Donor", json!({"donor_name": "Bo Chen", "email": "bo@people.test"})).await["id"]);
-    let meals = uid(&t.insert(&manager, "Fund", json!({"fund_name": "School meals", "restricted": true})).await["id"]);
+    // A restricted fund is kept apart in the books, under a cost center of its own, and spent only on
+    // what it is for (FEO-051).
+    let account = |name: &'static str| {
+        let (t, company) = (&t, company);
+        async move { uid(&t.find_one("Account", json!({"account_name": name, "company": company.to_string()})).await["id"]) }
+    };
+    let (food, rent) = (account("Cost of Goods Sold").await, account("Rent").await);
+    let meals_cc = uid(&t.insert(&a, "CostCenter", json!({"cost_center_name": "School meals", "company": company.to_string()})).await["id"]);
+    refused(t.k.insert(&manager, "Fund", obj(json!({"fund_name": "Wells", "restricted": true}))).await, "invalid", "give it a cost center");
+    let meals = uid(&t
+        .insert(
+            &manager,
+            "Fund",
+            json!({"fund_name": "School meals", "restricted": true, "cost_center": meals_cc.to_string(), "eligible_accounts": [{"account": food.to_string()}]}),
+        )
+        .await["id"]);
+    refused(
+        t.k.insert(&manager, "Fund", obj(json!({"fund_name": "Meals too", "cost_center": meals_cc.to_string()}))).await,
+        "invalid",
+        "each fund has a cost center of its own",
+    );
     let grant = uid(&t
         .insert(&raiser, "Grant", json!({"title": "Meals for 200 children", "funder": foundation.to_string(), "fund": meals.to_string(), "requested": "50000"}))
         .await["id"]);
@@ -215,6 +239,43 @@ async fn scenario() {
     assert_eq!(t.docstatus("je", entry).await, 2, "its entry reversed");
     assert_eq!(dec(&t.get("Donor", foundation).await["total_given"]), 0.0);
     assert_eq!(dec(&t.get("Grant", grant).await["received"]), 0.0);
+
+    // ───────────── the fund spent on what it is for, refunded as far as it holds (FEO-051) ─────────────
+    let paid = uid(&t.insert(&raiser, "Donation", gift(foundation, "25000", json!({"grant": grant.to_string(), "fund": meals.to_string()}))).await["id"]);
+    t.k.submit(&raiser, "Donation", paid, None).await.unwrap();
+    let je = t.get("JournalEntry", uid(&t.get("Donation", paid).await["journal_entry"])).await;
+    assert!(je["accounts"].as_array().unwrap().iter().all(|l| l["cost_center"] == json!(meals_cc.to_string())), "kept apart: {je:?}");
+    let spend = |account: Uuid, amount: &str, what: &str| json!({"fund": meals.to_string(), "date": "2026-05-01", "account": account.to_string(), "amount": amount, "description": what, "grant": grant.to_string()});
+    refused(t.k.insert(&manager, "FundSpend", obj(spend(rent, "1000", "Office rent"))).await, "invalid", "not what School meals may be spent on");
+    let lunches = uid(&t.insert(&manager, "FundSpend", spend(food, "18000", "Lunches, May")).await["id"]);
+    t.k.submit(&manager, "FundSpend", lunches, None).await.expect("spent on what it is for");
+    let june = uid(&t.insert(&manager, "FundSpend", spend(food, "9000", "Lunches, June")).await["id"]);
+    refused(t.k.submit(&manager, "FundSpend", june, None).await, "invalid", "holds 7000");
+    refused(t.k.run_action(&manager, "Donation", paid, "refund", json!({"amount": "8000", "reason": "Fewer children"})).await, "invalid", "holds 7000");
+    refused(t.k.run_action(&raiser, "Donation", paid, "refund", json!({"amount": "1000", "reason": "Asked"})).await, "forbidden", "");
+    t.k.run_action(&manager, "Donation", paid, "refund", json!({"amount": "2000", "reason": "Fewer children this term"})).await.expect("refunded");
+    let d = t.get("Donation", paid).await;
+    assert_eq!((dec(&d["refunded"]), dec(&d["net_amount"]), d["refunds"].as_array().unwrap().len()), (2000.0, 23000.0, 1));
+    refused(t.k.cancel(&manager, "Donation", paid, None).await, "invalid", "has refunds");
+    let f = t.get("Fund", meals).await;
+    assert_eq!((dec(&f["received"]), dec(&f["refunded"]), dec(&f["spent"]), dec(&f["balance"])), (25000.0, 2000.0, 18000.0, 5000.0));
+    let g = t.get("Grant", grant).await;
+    assert_eq!((dec(&g["received"]), dec(&g["spent"])), (23000.0, 18000.0), "what the grant reports");
+    assert_eq!(dec(&t.get("Donor", foundation).await["total_given"]), 23000.0, "given, net of the refund");
+    // The donor's receipt is for what was given; the fund ledger reconciles with the books.
+    let receipt = t.k.render_print(&manager, "Donation", paid).await.expect("a receipt");
+    assert!(receipt.contains("Donation receipt") && receipt.contains("23000") && receipt.contains("Refunded on"), "{receipt}");
+    let ledger = ferrum_domain::reports::run(&t.k, &manager, "fund_ledger", &HashMap::new()).await.expect("fund ledger");
+    let row = ledger["rows"].as_array().unwrap().iter().find(|r| r["fund"] == "School meals").cloned().unwrap();
+    assert_eq!(
+        (dec(&row["books_income"]), dec(&row["books_spent"]), dec(&row["books_held"]), row["reconciles"].clone()),
+        (23000.0, 18000.0, 5000.0, json!(true)),
+        "{row}"
+    );
+    assert!(matches!(ferrum_domain::reports::run(&t.k, &coordinator, "fund_ledger", &HashMap::new()).await, Err(Error::Forbidden(_))));
+    // Spending cancelled is the fund's again.
+    t.k.cancel(&manager, "FundSpend", lunches, None).await.unwrap();
+    assert_eq!(dec(&t.get("Fund", meals).await["balance"]), 23000.0);
 
     // ───────────── volunteers ─────────────
     let cy = uid(

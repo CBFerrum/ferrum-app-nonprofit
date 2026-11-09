@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Donation receipt {{ doc.number or "" }}</title>
+<style>
+ body{font:13px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;color:#111;margin:32px}
+ h1{font-size:20px;margin:0} h2{font-size:18px;margin:0;letter-spacing:.04em;text-transform:uppercase;color:#444}
+ .head{display:flex;justify-content:space-between;align-items:flex-start;gap:32px;margin-bottom:24px}
+ .muted{color:#666} table{border-collapse:collapse;margin-top:12px} td{padding:4px 12px 4px 0}
+ .num{text-align:right;font-variant-numeric:tabular-nums} .net td{border-top:2px solid #111;font-weight:700}
+ @media print{body{margin:0}}
+</style></head><body>
+{% set t = doc._titles or {} %}
+<div class="head">
+ <div><h1>Donation receipt</h1><div class="muted">{{ doc.number or "" }} · {{ doc.date or "" }}</div></div>
+ <div><h2>{{ t.donor or doc.donor or "" }}</h2>{% if t.fund %}<div class="muted">For {{ t.fund }}</div>{% endif %}</div>
+</div>
+<table>
+ <tr><td>Received</td><td class="num">{{ doc.amount }}</td></tr>
+ {% for r in doc.refunds or [] %}<tr><td>Refunded on {{ r.date }}</td><td class="num">−{{ r.amount }}</td></tr>{% endfor %}
+ <tr class="net"><td>Given</td><td class="num">{{ doc.net_amount or doc.amount }}</td></tr>
+</table>
+{% if doc.mode %}<p class="muted">Given by {{ doc.mode }}{% if doc.reference %}, {{ doc.reference }}{% endif %}.</p>{% endif %}
+</body></html>
