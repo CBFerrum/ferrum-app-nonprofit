@@ -273,6 +273,21 @@ async fn scenario() {
         "{row}"
     );
     assert!(matches!(ferrum_domain::reports::run(&t.k, &coordinator, "fund_ledger", &HashMap::new()).await, Err(Error::Forbidden(_))));
+    // Spending booked under the fund's cost center outside it does not reconcile.
+    let stray = uid(&t
+        .insert(
+            &a,
+            "JournalEntry",
+            json!({"company": company.to_string(), "posting_date": "2026-05-02", "accounts": [
+                {"account": rent.to_string(), "debit": "500", "credit": "0", "cost_center": meals_cc.to_string()},
+                {"account": bank.to_string(), "debit": "0", "credit": "500", "cost_center": meals_cc.to_string()}]}),
+        )
+        .await["id"]);
+    t.k.submit(&a, "JournalEntry", stray, None).await.unwrap();
+    let ledger = ferrum_domain::reports::run(&t.k, &manager, "fund_ledger", &HashMap::new()).await.unwrap();
+    let row = ledger["rows"].as_array().unwrap().iter().find(|r| r["fund"] == "School meals").cloned().unwrap();
+    assert_eq!((dec(&row["books_spent"]), row["reconciles"].clone()), (18500.0, json!(false)), "{row}");
+    t.k.cancel(&a, "JournalEntry", stray, None).await.unwrap();
     // Spending cancelled is the fund's again.
     t.k.cancel(&manager, "FundSpend", lunches, None).await.unwrap();
     assert_eq!(dec(&t.get("Fund", meals).await["balance"]), 23000.0);
