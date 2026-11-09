@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0
+
+Funds kept apart in the books, spent on what they are for, refunded as far as they hold (FEO-051).
+
+- **Funds as a ledger dimension.** A fund has a cost center of its own, carried by every posting it makes: its donations, refunds and spending. A restricted fund must have one. It may have an income account of its own (Donations Credited To), and lists the expense accounts it may be spent on.
+- **Fund Spending**, a new document. Money spent from a fund, posted to the books under its cost center, and reversed when cancelled. A restricted fund is spent only on its eligible accounts and only as far as it holds. It may report against the fund's grant.
+- **Refunds.** A submitted donation is refunded in part or all, saying why, by someone who may cancel donations. The reverse is posted under the fund's cost center and the refund is kept on the donation. A restricted fund refunds only what it still holds: what it spent is not given back. A donation with refunds is not cancelled.
+- **Totals.** A donor's total is net of refunds. A fund has received, refunded, spent and what it holds; a grant, received and spent.
+- **The donor's receipt** (the donation's print) shows what was received, each refund, and what was given.
+- **Fund Ledger**, a new report. Each fund as Nonprofit records it, beside what the books carry under its cost center (income, spending, held), and whether they reconcile.
+
 ## 0.1.15
 
 Rebuilt with Ferrum-Frontend c59c9a2: the names of its models, fields and manifest in Arabic and Hindi (118 each in ui/src/locales/names, which the platform serves to every page of the workspace, so a record's labels, the launcher and the bar read in the person's language). Translated by the model, to be reviewed by native speakers.
