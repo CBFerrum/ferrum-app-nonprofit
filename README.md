@@ -42,16 +42,16 @@ cd ui && npm run build && npm run check
 
 ## Not yet
 
-- Recurring giving, gift aid and tax receipts as documents, online donation and membership pages, and
-  payment gateways.
+- Recurring giving, gift aid, online donation and membership pages, and payment gateways with their
+  refunds (a refund here is recorded, and paid back outside).
+- Tax receipts' rules by country: the donor's receipt says what was given, not what may be deducted.
 - Chapters, events and campaigns (Campaigns has campaigns).
-- Fund accounting with restricted net assets in the ledger: funds total their donations, and the books
-  carry one income account.
 
 ## Changelog
 
 | Version | Highlights |
 |---|---|
+| **0.2.0** | Funds kept apart in the books under their cost centers, spent only on what they are for, refunded as far as they hold; the fund ledger reconciled. |
 | **0.1.15** | Its names in Arabic and Hindi. |
 | **0.1.14** | The assistant knows its records; personal and health details in field groups. |
 | **0.1.13** | Rebuilt with Ferrum-Frontend 5b22e7b: its own words in Arabic and Hindi. |

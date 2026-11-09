@@ -9,7 +9,7 @@ modules:
     label: Nonprofit
     icon: hand-heart
     order: 49
-    items: [Member, Membership, Donation, Donor, Fund, Grant, Volunteer, VolunteerShift, MembershipType, NonprofitSettings]
+    items: [Member, Membership, Donation, Donor, Fund, FundSpend, Grant, Volunteer, VolunteerShift, MembershipType, NonprofitSettings, report:fund_ledger]
 
 # What a personal-data request exports and erases (the person's email): how to reach them and what
 # they wrote; amounts and dates stay, as the books need them.
@@ -29,6 +29,7 @@ roles:
       - {entity: Donor, read: true, write: true, create: true, export: true, import: true, read_groups: [identity], write_groups: [identity]}
       - {entity: Fund, read: true, write: true, create: true}
       - {entity: Donation, read: true, write: true, create: true, submit: true, cancel: true, export: true}
+      - {entity: FundSpend, read: true, write: true, create: true, submit: true, cancel: true, export: true}
       - {entity: Grant, read: true, write: true, create: true, delete: true, export: true}
       - {entity: Volunteer, read: true, write: true, create: true, delete: true, export: true}
       - {entity: VolunteerShift, read: true, write: true, create: true, delete: true, export: true}
@@ -36,6 +37,7 @@ roles:
       - {entity: Item, read: true}
       - {entity: Company, read: true}
       - {entity: Account, read: true}
+      - {entity: CostCenter, read: true}
       - {entity: SalesInvoice, read: true, create: true}
       - {entity: JournalEntry, read: true}
   - name: Fundraiser
@@ -44,6 +46,7 @@ roles:
       - {entity: Member, read: true}
       - {entity: Donor, read: true, write: true, create: true, read_groups: [identity], write_groups: [identity]}
       - {entity: Fund, read: true}
+      - {entity: FundSpend, read: true}
       - {entity: Donation, read: true, write: true, create: true, submit: true}
       - {entity: Grant, read: true, write: true, create: true}
   - name: Volunteer Coordinator
