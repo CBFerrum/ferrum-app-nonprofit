@@ -12,6 +12,7 @@
 
 mod giving;
 mod members;
+mod reports;
 mod volunteers;
 
 use chrono::{NaiveDate, Utc};
@@ -38,12 +39,14 @@ pub fn register(hooks: &mut HookRegistry) {
     hooks
         .register("Membership", Arc::new(members::MembershipHook))
         .register("Donation", Arc::new(giving::DonationHook))
+        .register("Fund", Arc::new(giving::FundHook))
+        .register("FundSpend", Arc::new(giving::SpendHook))
         .register("VolunteerShift", Arc::new(volunteers::ShiftHook));
 }
 
-/// This app's reports: none of its own; the lists of members, donations and grants are its figures.
+/// This app's reports: the fund ledger, reconciled with the books (FEO-051).
 pub fn reports() -> Vec<Arc<dyn ReportSource>> {
-    vec![]
+    vec![Arc::new(reports::FundLedger)]
 }
 
 /// Upkeep: memberships whose invoices were paid count, and members whose memberships ended lapse.

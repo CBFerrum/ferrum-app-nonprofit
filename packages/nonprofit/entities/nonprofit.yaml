@@ -85,19 +85,33 @@
     - {name: total_given, type: currency, read_only: true, no_copy: true, in_list: true}
   list: {columns: [donor_name, donor_type, email, total_given], sort: donor_name asc}
 
+- name: FundAccount
+  label: Eligible Account
+  kind: child
+  fields:
+    - {name: account, type: link, to: Account, required: true, in_list: true}
+
 - name: Fund
   label: Fund
   label_plural: Funds
   kind: master
   module: nonprofit
   title_field: fund_name
-  description: Money given for a purpose. A restricted fund's donations are kept apart for it.
+  description: "Money given for a purpose. A restricted fund is kept apart in the books under its cost center, and spent only on the accounts it may be spent on, as far as it holds."
   fields:
     - {name: fund_name, type: data, required: true, in_list: true}
     - {name: restricted, type: check, in_list: true}
     - {name: purpose, type: text}
+    - {name: cost_center, type: link, to: CostCenter, description: "Every posting of the fund carries it: its donations, refunds and spending. A restricted fund has one"}
+    - {name: income_account, type: link, to: Account, label: Donations Credited To, description: "Its donations' income account; the settings' when empty"}
+    - {name: eligible_accounts, type: table, of: FundAccount, label: May Be Spent On, description: "The expense accounts a restricted fund may be spent on"}
     - {name: received, type: currency, read_only: true, no_copy: true, in_list: true}
-  list: {columns: [fund_name, restricted, received], sort: fund_name asc}
+    - {name: refunded, type: currency, read_only: true, no_copy: true}
+    - {name: spent, type: currency, read_only: true, no_copy: true, in_list: true}
+    - {name: balance, type: currency, read_only: true, no_copy: true, in_list: true, description: "Received, less refunded and spent"}
+  rules:
+    - {name: kept_apart, check: "!doc.restricted || doc.cost_center != null", message: "A restricted fund is kept apart in the books: give it a cost center"}
+  list: {columns: [fund_name, restricted, received, spent, balance], sort: fund_name asc}
 
 - name: Donation
   label: Donation
@@ -117,8 +131,47 @@
     - {name: reference, type: data}
     - {name: journal_entry, type: link, to: JournalEntry, read_only: true, no_copy: true}
     - {name: note, type: text}
+    - {name: refunded, type: currency, read_only: true, no_copy: true}
+    - {name: net_amount, type: currency, read_only: true, no_copy: true, label: Net of Refunds, description: "What the donor's receipt says was given"}
+    - {name: refunds, type: table, of: DonationRefund, read_only: true, no_copy: true}
+  actions:
+    - name: refund
+      label: Refund Part or All
+      permission: cancel
+      condition: "doc.docstatus == 1"
+      params:
+        - {name: amount, type: currency, label: Amount, required: true}
+        - {name: reason, type: text, label: Why, required: true}
   numbering: {template: "DON-{YYYY}-{seq:5}"}
   list: {columns: [number, donor, date, amount, fund], sort: date desc}
+
+- name: DonationRefund
+  label: Refund
+  kind: child
+  fields:
+    - {name: date, type: date, read_only: true, in_list: true}
+    - {name: amount, type: currency, read_only: true, in_list: true}
+    - {name: reason, type: text, read_only: true, in_list: true}
+    - {name: journal_entry, type: link, to: JournalEntry, read_only: true}
+
+- name: FundSpend
+  label: Fund Spending
+  label_plural: Fund Spending
+  kind: document
+  submittable: true
+  module: nonprofit
+  title_field: description
+  description: "Money spent from a fund. A restricted fund is spent only on the accounts it may be spent on, and only as far as it holds. Submitting it posts it to the books under the fund's cost center; cancelling it reverses that."
+  fields:
+    - {name: fund, type: link, to: Fund, required: true, in_list: true, in_filter: true}
+    - {name: date, type: date, required: true, default_expr: today, in_list: true}
+    - {name: account, type: link, to: Account, required: true, label: Expense Account, in_list: true}
+    - {name: amount, type: currency, required: true, in_list: true}
+    - {name: description, type: data, required: true, in_list: true}
+    - {name: grant, type: link, to: Grant, in_filter: true, description: "The grant it reports against, when it spends a grant's money"}
+    - {name: journal_entry, type: link, to: JournalEntry, read_only: true, no_copy: true}
+  numbering: {template: "SPD-{YYYY}-{seq:5}"}
+  list: {columns: [number, fund, date, description, amount], sort: date desc}
 
 - name: Grant
   label: Grant
@@ -134,6 +187,7 @@
     - {name: requested, type: currency, required: true, in_list: true}
     - {name: awarded, type: currency, in_list: true}
     - {name: received, type: currency, read_only: true, no_copy: true, in_list: true}
+    - {name: spent, type: currency, read_only: true, no_copy: true, in_list: true, description: "Fund spending reported against it"}
     - {name: status, type: select, options: [Draft, Submitted, Awarded, Declined, Closed], default: Draft, required: true, in_list: true, in_filter: true}
     - {name: submitted_on, type: date}
     - {name: decided_on, type: date}
