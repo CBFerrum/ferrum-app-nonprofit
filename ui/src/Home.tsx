@@ -5,7 +5,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { api, docPath, todayIso, t, isolate } from "@ferrum/client";
-import { EmptyState, ErrorState, PageLoading, useShellTitle } from "@ferrum/kit";
+import { Settings } from "lucide-react";
+import { ButtonLink, HomeSkeleton, LoadFailed, PageHead, PageStack, Stat, StatGrid, StatePanel, useShellTitle } from "@ferrum/kit";
 
 interface Row {
   [k: string]: unknown;
@@ -56,18 +57,18 @@ export function Home() {
       return { named: settings.rows.length > 0, active, lapsed, unpaid, donations, grants, volunteers };
     },
   });
-  if (q.isPending) return <PageLoading />;
-  if (q.isError) return <ErrorState error={q.error} onRetry={() => void q.refetch()} />;
+  const head = <PageHead title={t("Nonprofit")} />;
+  if (q.isPending) return <PageStack>{head}<HomeSkeleton /></PageStack>;
+  if (q.isError) return <PageStack>{head}<LoadFailed error={q.error} onRetry={() => void q.refetch()} /></PageStack>;
   const { named, active, lapsed, unpaid, donations, grants, volunteers } = q.data;
   if (!named)
     return (
-      <div className="np-page">
-        <EmptyState title={t("Name the books first")} icon="settings">
-          <p className="muted">
-            {t("Donations post to the books and memberships are invoiced from a company: set the company, the account donations are received into and the income they are credited to in")} <Link to="/e/NonprofitSettings">{t("Nonprofit Settings")}</Link>.
-          </p>
-        </EmptyState>
-      </div>
+      <PageStack>
+        {head}
+        <StatePanel kind="empty" icon={Settings} title={t("Name the books first")} action={<ButtonLink to="/e/NonprofitSettings" variant="primary">{t("Nonprofit Settings")}</ButtonLink>}>
+          {t("Donations post to the books and memberships are invoiced from a company: set the company, the account donations are received into and the income they are credited to in")} <Link to="/e/NonprofitSettings">{t("Nonprofit Settings")}</Link>.
+        </StatePanel>
+      </PageStack>
     );
   const figures: { label: string; value: string; to: string }[] = [
     { label: t("Active members"), value: String(active), to: "/e/Member" },
@@ -78,15 +79,13 @@ export function Home() {
     { label: t("Volunteers' approved hours"), value: sum(volunteers, "hours").toLocaleString(), to: "/e/Volunteer" },
   ];
   return (
-    <div className="np-page">
-      <div className="np-columns">
+    <PageStack>
+      {head}
+      <StatGrid min="lg">
         {figures.map((f) => (
-          <Link key={f.label} to={f.to} className="card card-pad stack">
-            <span className="muted">{isolate(f.label)}</span>
-            <strong style={{ fontSize: 28 }}>{isolate(f.value)}</strong>
-          </Link>
+          <Stat key={f.label} label={isolate(f.label)} value={isolate(f.value)} to={f.to} />
         ))}
-      </div>
-    </div>
+      </StatGrid>
+    </PageStack>
   );
 }
