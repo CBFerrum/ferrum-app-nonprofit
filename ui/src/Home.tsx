@@ -81,7 +81,7 @@ export function Home() {
   return (
     <PageStack>
       {head}
-      <StatGrid className="!grid-cols-[repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
+      <StatGrid min="lg">
         {figures.map((f) => (
           <Stat key={f.label} label={isolate(f.label)} value={isolate(f.value)} to={f.to} />
         ))}
