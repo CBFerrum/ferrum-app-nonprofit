@@ -3,8 +3,3 @@
 @import "../../../ferrum/web/src/index.css";
 @source "../../../ferrum/web/src";
 @source ".";
-
-/* Six figures: three to a row where there is room, so none is left alone on a second row. */
-.nf-figures {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-}
