@@ -4,14 +4,7 @@
 @source "../../../ferrum/web/src";
 @source ".";
 
-.np-page {
-  display: grid;
-  gap: 16px;
-  padding: 16px;
-}
-
-.np-columns {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+/* Six figures: three to a row where there is room, so none is left alone on a second row. */
+.nf-figures {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
 }
