@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router";
 import { api, docPath, todayIso, t, isolate } from "@ferrum/client";
 import { Settings } from "lucide-react";
-import { ButtonLink, HomeSkeleton, LoadFailed, PageHead, StatePanel, Tile, TileGrid, useShellTitle } from "@ferrum/kit";
+import { ButtonLink, HomeSkeleton, LoadFailed, PageHead, PageStack, Stat, StatGrid, StatePanel, useShellTitle } from "@ferrum/kit";
 
 interface Row {
   [k: string]: unknown;
@@ -58,17 +58,17 @@ export function Home() {
     },
   });
   const head = <PageHead title={t("Nonprofit")} />;
-  if (q.isPending) return <>{head}<HomeSkeleton /></>;
-  if (q.isError) return <>{head}<LoadFailed error={q.error} onRetry={() => void q.refetch()} /></>;
+  if (q.isPending) return <PageStack>{head}<HomeSkeleton /></PageStack>;
+  if (q.isError) return <PageStack>{head}<LoadFailed error={q.error} onRetry={() => void q.refetch()} /></PageStack>;
   const { named, active, lapsed, unpaid, donations, grants, volunteers } = q.data;
   if (!named)
     return (
-      <>
+      <PageStack>
         {head}
         <StatePanel kind="empty" icon={Settings} title={t("Name the books first")} action={<ButtonLink to="/e/NonprofitSettings" variant="primary">{t("Nonprofit Settings")}</ButtonLink>}>
           {t("Donations post to the books and memberships are invoiced from a company: set the company, the account donations are received into and the income they are credited to in")} <Link to="/e/NonprofitSettings">{t("Nonprofit Settings")}</Link>.
         </StatePanel>
-      </>
+      </PageStack>
     );
   const figures: { label: string; value: string; to: string }[] = [
     { label: t("Active members"), value: String(active), to: "/e/Member" },
@@ -79,13 +79,13 @@ export function Home() {
     { label: t("Volunteers' approved hours"), value: sum(volunteers, "hours").toLocaleString(), to: "/e/Volunteer" },
   ];
   return (
-    <>
+    <PageStack>
       {head}
-      <TileGrid label={t("Nonprofit")} className="nf-figures">
+      <StatGrid className="!grid-cols-[repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
         {figures.map((f) => (
-          <Tile key={f.label} to={f.to} title={isolate(f.label)} meta={<span className="mt-1 text-2xl font-semibold tabular-nums text-foreground">{isolate(f.value)}</span>} />
+          <Stat key={f.label} label={isolate(f.label)} value={isolate(f.value)} to={f.to} />
         ))}
-      </TileGrid>
-    </>
+      </StatGrid>
+    </PageStack>
   );
 }
