@@ -5,9 +5,10 @@
 use crate::{date, obj};
 use async_trait::async_trait;
 use chrono::{Datelike, Duration, Months, NaiveDate};
+use ferrum_app_erp::portal;
 use ferrum_domain::flow::{create_for_user, created};
 use ferrum_domain::util::{d, elevated, id, money, s, set, sys};
-use ferrum_kernel::{Ctx, Doc, DocHook, Error, HookCtx, Kernel, Result};
+use ferrum_kernel::{Action, Ctx, Doc, DocHook, Error, HookCtx, Kernel, Result};
 use ferrum_meta::effective::Schema;
 use serde_json::{Value, json};
 use std::sync::Arc;
@@ -75,16 +76,16 @@ impl DocHook for MembershipHook {
     }
 }
 
-/// The member's customer: theirs, or one made from them (and kept on the member).
+/// The member's customer: theirs, else ERP's for them (the one their own email names, or one made
+/// now by a user who may make customers), kept on the member.
 async fn customer_for(hc: &mut HookCtx<'_>, member: &Doc) -> Result<Uuid> {
     if let Some(c) = id(member, "customer") {
         return Ok(c);
     }
     let mid = id(member, "id").ok_or_else(|| Error::internal("a member without an id"))?;
-    let customer =
-        create_for_user(hc, "Customer", obj(json!({"customer_name": s(member, "member_name"), "customer_type": "Individual", "email": s(member, "email")})))
-            .await?;
-    let cid = id(&customer, "id").ok_or_else(|| Error::internal("a customer without an id"))?;
+    hc.ctx.require("Customer", Action::Create)?;
+    let name = s(member, "member_name").unwrap_or_default();
+    let (cid, _) = portal::customer_for(hc.kernel, &elevated(hc.ctx), hc.tx, name, s(member, "email"), None).await?;
     hc.kernel.set_values_tx(&elevated(hc.ctx), hc.tx, "Member", mid, obj(json!({"customer": cid.to_string()}))).await?;
     Ok(cid)
 }

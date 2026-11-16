@@ -47,7 +47,7 @@ spent only on what they are for.
 | **Version** | 0.2.2 |
 | **Kind** | Its own interface at `/nonprofit/` (a home of figures), with every record in Ferrum's lists and forms |
 | **What it adds** | 15 record types (10 documents, 4 child tables, 1 settings record), 3 roles, 1 report, 1 print format, 1 menu |
-| **Depends on** | Ferrum platform `>=0.3.2, <0.4`; ERP `>=0.1` (installing Nonprofit installs ERP) |
+| **Depends on** | Ferrum platform `>=0.3.2, <0.4`; ERP `>=0.28.3` (installing Nonprofit installs ERP) |
 | **Works with** | ERP (customers, items, companies, accounts, cost centres, sales invoices, journal entries) |
 | **Languages** | English, Arabic, Hindi (words and record names); right-to-left layout |
 | **Tests** | 2 Rust tests (one walks a year on PostgreSQL) and a UI suite |
@@ -115,8 +115,8 @@ spent only on what they are for.
 
 - **Membership types.** A type has a name, an amount, how many months one membership lasts (1 to 120, 12 by default),
   and the item it is invoiced as.
-- **Members.** Name, email, phone, membership type, notes, and the customer invoices go to (made from the member when
-  empty). Standing is *Applicant*, *Active* or *Lapsed*, with a member-since date and an expiry date.
+- **Members.** Name, email, phone, membership type, notes, and the customer invoices go to (when empty, the one the
+  member's email already names, else one made from the member). Standing is *Applicant*, *Active* or *Lapsed*, with a member-since date and an expiry date.
 - **Terms.** A membership is one term: a member, a type, a start date (today by default) and an end date worked out for
   you, the day before the same date months later, or the end of the month when there is no such date.
 - **Four states.** A term is *Draft*, *Invoiced*, *Paid* or *Cancelled*. Invoice It makes a draft Sales Invoice to the
