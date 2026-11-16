@@ -160,6 +160,15 @@ async fn scenario() {
     assert_eq!(inv["customer"], member["customer"], "a customer made from the member");
     assert_eq!(dec(&inv["items"][0]["price_list_rate"]), 1200.0);
     refused(t.k.update(&manager, "Membership", msid, obj(json!({"from_date": "2026-02-01"})), None).await, "invalid", "does not change");
+    // A member who already is a customer, by their own email, is invoiced as that customer, kept on
+    // them; no second one is made.
+    let ravi_customer = t.insert(&a, "Customer", json!({"customer_name": "Ravi Das", "customer_type": "Individual", "email": "ravi@people.test"})).await;
+    let ravi = t.insert(&manager, "Member", json!({"member_name": "Ravi Das", "email": "ravi@people.test", "membership_type": annual.to_string()})).await;
+    let ravi = uid(&ravi["id"]);
+    let his = t.insert(&manager, "Membership", json!({"member": ravi.to_string(), "membership_type": annual.to_string(), "from_date": "2026-01-15"})).await;
+    let billed = t.k.run_action(&manager, "Membership", uid(&his["id"]), "make_invoice", Value::Null).await.expect("invoiced");
+    assert_eq!(t.get("SalesInvoice", uid(&billed["sales_invoice"]["id"])).await["customer"], ravi_customer["id"], "invoiced to the customer he already is");
+    assert_eq!(t.get("Member", ravi).await["customer"], ravi_customer["id"]);
 
     // Not paid yet: nothing counts.
     ferrum_app_nonprofit::maintenance_on(&k, day("2026-03-01")).await.unwrap();

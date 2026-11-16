@@ -1,6 +1,6 @@
 id: nonprofit
 name: Nonprofit
-version: 0.2.2
+version: 0.2.3
 publisher: cbferrum
 summary: "Members and memberships, donors and donations posted to the books, funds, grants and volunteers"
 description: README.md
@@ -10,8 +10,8 @@ homepage: https://github.com/CBFerrum/ferrum-app-nonprofit
 support: https://github.com/CBFerrum/ferrum-app-nonprofit/issues
 runtime: native
 platform: ">=0.3.2, <0.4"
-# Records of ERP (customers, items, invoices, the ledger): installing it installs ERP.
-requires: {erp: ">=0.1"}
+# Records of ERP (customers, items, invoices, the ledger), and its portal::customer_for (0.28.3): installing it installs ERP.
+requires: {erp: ">=0.28.3"}
 packages: [nonprofit]
 uninstall: ask
 # Its own interface at /nonprofit/: who belongs and who gave, and the records (ui/, built into ui/dist).
