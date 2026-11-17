@@ -15,7 +15,7 @@ mod members;
 mod reports;
 mod volunteers;
 
-use chrono::{NaiveDate, Utc};
+use chrono::NaiveDate;
 use ferrum_domain::reports::ReportSource;
 use ferrum_domain::util::s;
 use ferrum_kernel::{Doc, Error, HookRegistry, Kernel, Result};
@@ -49,13 +49,18 @@ pub fn reports() -> Vec<Arc<dyn ReportSource>> {
     vec![Arc::new(reports::FundLedger)]
 }
 
-/// Upkeep: memberships whose invoices were paid count, and members whose memberships ended lapse.
+/// Upkeep: memberships whose invoices were paid count, and members whose memberships ended lapse, each workspace on
+/// its own day.
 pub async fn maintenance(k: &Kernel) -> Result<()> {
-    maintenance_on(k, Utc::now().date_naive()).await
+    upkeep(k, None).await
 }
 
-/// [`maintenance`] as of `today`.
+/// [`maintenance`] as if every workspace's day were `today`.
 pub async fn maintenance_on(k: &Kernel, today: NaiveDate) -> Result<()> {
+    upkeep(k, Some(today)).await
+}
+
+async fn upkeep(k: &Kernel, on: Option<NaiveDate>) -> Result<()> {
     let mut tx = k.db.system_tx().await?;
     let tenants: Vec<Uuid> = sqlx::query_scalar("select id from tenant where status = 'active' order by id").fetch_all(&mut *tx).await?;
     tx.commit().await?;
@@ -63,7 +68,7 @@ pub async fn maintenance_on(k: &Kernel, today: NaiveDate) -> Result<()> {
     for tenant in tenants {
         match k.registry.schema(tenant).await {
             Ok(s) if s.packages.iter().any(|p| p == "nonprofit") => {
-                if let Err(e) = members::upkeep(k, tenant, s, today).await {
+                if let Err(e) = members::upkeep(k, tenant, s, on).await {
                     first_error.get_or_insert(e);
                 }
             }
