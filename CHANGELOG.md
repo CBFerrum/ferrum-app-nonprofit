@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.5
+
+Server only. Needs the same platform as 0.2.4. No interface or database change.
+
+- **The upkeep runs on each workspace's day.** It dated a membership paid, and made members active or lapsed, on the
+  UTC day: a workspace east of UTC had the first hours of its day counted as the day before, one west of UTC its
+  evenings as the next day. Each workspace's own day is used now.
+
 ## 0.2.4
 
 Needs the same platform as 0.2.3. No database change. Interface only, `ui/dist` rebuilt with Ferrum-Frontend `06bd1a2`.
