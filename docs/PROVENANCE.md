@@ -14,6 +14,3 @@
 - Not taken: Razorpay subscriptions, chapters, the website forms, and Donation's payment entry against a
   donor customer. A gift is income, so this app posts it as a journal entry to donation income.
 - Its own: funds, a grant's reports and payments, volunteer shifts and hours, and all the code.
-
-The copy read is in `ERP/referance/industry/erpnext-v13` on the machine this was written on (sparse:
-`erpnext/non_profit` and `erpnext/education`).
