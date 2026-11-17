@@ -137,10 +137,11 @@ async fn invoice(hc: &mut HookCtx<'_>, doc: &Doc) -> Result<Value> {
     Ok(json!({"status": "Invoiced", "sales_invoice": created("SalesInvoice", &inv)}))
 }
 
-/// One workspace's upkeep as of `today`: invoiced memberships whose invoices are submitted and paid
+/// One workspace's upkeep as of `on`, else its own day: invoiced memberships whose invoices are submitted and paid
 /// count, and each member's standing follows their paid terms.
-pub(crate) async fn upkeep(k: &Kernel, tenant: Uuid, schema: Arc<Schema>, today: NaiveDate) -> Result<()> {
+pub(crate) async fn upkeep(k: &Kernel, tenant: Uuid, schema: Arc<Schema>, on: Option<NaiveDate>) -> Result<()> {
     let ctx = Ctx::system(tenant, schema);
+    let today = on.unwrap_or_else(|| ctx.today());
     let mut tx = k.db.tenant_tx(tenant).await?;
     let paid: Vec<Uuid> = sqlx::query_scalar(
         "select m.id from e_membership m join e_sales_invoice i on i.tenant_id = m.tenant_id and i.id = m.sales_invoice \

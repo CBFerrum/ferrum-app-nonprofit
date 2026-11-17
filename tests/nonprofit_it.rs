@@ -317,4 +317,18 @@ async fn scenario() {
     assert_eq!((dec(&t.get("Volunteer", cy).await["hours"]), dec(&t.get("Volunteer", dee).await["hours"])), (0.0, 2.0), "moved with the shift");
     refused(t.k.insert(&coordinator, "Donation", obj(gift(bo, "10", json!({})))).await, "forbidden", "");
     let _ = t.docstatus("si", invoice).await;
+
+    // ───────────── the workspace's day, not UTC's ─────────────
+    // No clock can be set: as the platform's own suites do, the workspace moves to a zone whose day is not UTC's now
+    // (UTC-11 before 10:00 UTC, UTC+14 after), and upkeep dates a membership paid on the workspace's day.
+    let zone = if chrono::Timelike::hour(&chrono::Utc::now()) < 10 { "Pacific/Pago_Pago" } else { "Pacific/Kiritimati" };
+    t.k.update_tenant_settings(&a, &obj(json!({"timezone": zone}))).await.expect("the workspace's zone");
+    let today = t.k.load_ctx(t.tenant, manager.user, None, "it".into()).await.unwrap().today();
+    assert_ne!(today, chrono::Utc::now().date_naive(), "{zone}'s day is not UTC's");
+    let his_invoice = uid(&billed["sales_invoice"]["id"]);
+    t.k.submit(&a, "SalesInvoice", his_invoice, None).await.expect("his invoice submitted");
+    let payment = t.k.run_action(&a, "SalesInvoice", his_invoice, "make_payment", Value::Null).await.expect("a payment");
+    t.k.submit(&a, "PaymentEntry", uid(&payment["id"]), None).await.expect("the payment submitted");
+    ferrum_app_nonprofit::maintenance(&k).await.unwrap();
+    assert_eq!(t.get("Membership", uid(&his["id"])).await["paid_on"], json!(today.to_string()), "paid on the workspace's day");
 }
