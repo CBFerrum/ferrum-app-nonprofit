@@ -99,7 +99,6 @@ async fn scenario() {
     }
     let k = Kernel::boot(db, catalog, hooks, KernelSettings::default(), None).await.expect("boot");
     ferrum_domain::maintenance(&k).await.expect("partitions");
-    ferrum_app_erp::maintenance(&k).await.expect("partitions");
     let tenant = k
         .create_tenant(NewTenant {
             slug: "helpers".into(),
@@ -169,13 +168,13 @@ async fn scenario() {
     assert_eq!(t.get("Member", ravi).await["customer"], ravi_customer["id"]);
 
     // Not paid yet: nothing counts.
-    ferrum_app_nonprofit::maintenance_on(&k, day("2026-03-01")).await.unwrap();
+    ferrum_app_nonprofit::maintenance_on(&k, t.tenant, day("2026-03-01")).await.unwrap();
     assert_eq!((t.get("Membership", msid).await["status"].as_str(), t.get("Member", ana).await["status"].as_str()), (Some("Invoiced"), Some("Applicant")));
     // Paid through ERP: submitted, then a payment recorded and submitted.
     t.k.submit(&a, "SalesInvoice", invoice, None).await.expect("the invoice submitted");
     let payment = t.k.run_action(&a, "SalesInvoice", invoice, "make_payment", Value::Null).await.expect("a payment");
     t.k.submit(&a, "PaymentEntry", uid(&payment["id"]), None).await.expect("the payment submitted");
-    ferrum_app_nonprofit::maintenance_on(&k, day("2026-03-01")).await.unwrap();
+    ferrum_app_nonprofit::maintenance_on(&k, t.tenant, day("2026-03-01")).await.unwrap();
     let ms = t.get("Membership", msid).await;
     assert_eq!((ms["status"].as_str(), ms["paid_on"].as_str()), (Some("Paid"), Some("2026-03-01")));
     let member = t.get("Member", ana).await;
@@ -183,7 +182,7 @@ async fn scenario() {
         (member["status"].as_str(), member["member_since"].as_str(), member["expires_on"].as_str()),
         (Some("Active"), Some("2026-01-15"), Some("2027-01-14"))
     );
-    ferrum_app_nonprofit::maintenance_on(&k, day("2027-02-01")).await.unwrap();
+    ferrum_app_nonprofit::maintenance_on(&k, t.tenant, day("2027-02-01")).await.unwrap();
     assert_eq!(t.get("Member", ana).await["status"], "Lapsed", "the term ended");
 
     // ───────────── giving ─────────────
@@ -329,6 +328,6 @@ async fn scenario() {
     t.k.submit(&a, "SalesInvoice", his_invoice, None).await.expect("his invoice submitted");
     let payment = t.k.run_action(&a, "SalesInvoice", his_invoice, "make_payment", Value::Null).await.expect("a payment");
     t.k.submit(&a, "PaymentEntry", uid(&payment["id"]), None).await.expect("the payment submitted");
-    ferrum_app_nonprofit::maintenance(&k).await.unwrap();
+    ferrum_app_nonprofit::maintenance(&k, t.tenant).await.unwrap();
     assert_eq!(t.get("Membership", uid(&his["id"])).await["paid_on"], json!(today.to_string()), "paid on the workspace's day");
 }

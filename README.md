@@ -7,7 +7,7 @@
 
 <br>
 
-[![Version](https://img.shields.io/badge/version-0.2.5-be185d?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.0-be185d?style=flat-square)](CHANGELOG.md)
 [![Licence: AGPL-3.0](https://img.shields.io/badge/licence-AGPL--3.0-blue?style=flat-square)](LICENSE)
 [![Ferrum platform](https://img.shields.io/badge/runs%20on-Ferrum-2f5bea?style=flat-square)](https://github.com/CBFerrum/Ferrum)
 ![Rust](https://img.shields.io/badge/Rust-server-b7410e?style=flat-square&logo=rust)
@@ -44,10 +44,10 @@ spent only on what they are for.
 
 | | |
 |---|---|
-| **Version** | 0.2.5 |
+| **Version** | 0.3.0 |
 | **Kind** | Its own interface at `/nonprofit/` (a home of figures), with every record in Ferrum's lists and forms |
 | **What it adds** | 15 record types (10 documents, 4 child tables, 1 settings record), 3 roles, 1 report, 1 print format, 1 menu |
-| **Depends on** | Ferrum platform `>=0.3.2, <0.4`; ERP `>=0.28.3` (installing Nonprofit installs ERP) |
+| **Depends on** | Ferrum platform `>=0.4.0, <0.5`; ERP `>=0.28.3` (installing Nonprofit installs ERP) |
 | **Works with** | ERP (customers, items, companies, accounts, cost centres, sales invoices, journal entries) |
 | **Languages** | English, Arabic, Hindi (words and record names); right-to-left layout |
 | **Tests** | 2 Rust tests (one walks a year on PostgreSQL) and a UI suite |
@@ -336,6 +336,7 @@ extension. A refund here is recorded in the books; the money itself goes back ou
 
 ### ✅ Recently shipped
 
+- [x] **0.3.0** Upkeep is one workspace's: needs Ferrum 0.4.0.
 - [x] **0.2.5** The upkeep runs on each workspace's day: a membership paid is dated, and a member is active or lapsed, by it.
 - [x] **0.2.4** Rebuilt on Ferrum-Frontend 06bd1a2: its start through `mountApp`, and no routes to the screens apps no longer have.
 - [x] **0.2.3** A member's customer is found or made through ERP's portal functions, so a member ERP already knows is not given a second customer.
@@ -382,7 +383,7 @@ extension. A refund here is recorded in the books; the money itself goes back ou
 ## 🚀 Install
 
 Nonprofit is a native Ferrum app: the Ferrum server includes it (`runtime: native`) and a workspace turns it on from
-**App Manager**. It needs platform `>=0.3.2, <0.4`. Installing it installs **ERP**, which holds the ledger and invoices.
+**App Manager**. It needs platform `>=0.4.0, <0.5`. Installing it installs **ERP**, which holds the ledger and invoices.
 
 After installing:
 
