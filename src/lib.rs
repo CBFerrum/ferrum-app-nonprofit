@@ -18,7 +18,7 @@ mod volunteers;
 use chrono::NaiveDate;
 use ferrum_domain::reports::ReportSource;
 use ferrum_domain::util::s;
-use ferrum_kernel::{Doc, Error, HookRegistry, Kernel, Result};
+use ferrum_kernel::{Doc, HookRegistry, Kernel, Result};
 use serde_json::Value;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -49,36 +49,19 @@ pub fn reports() -> Vec<Arc<dyn ReportSource>> {
     vec![Arc::new(reports::FundLedger)]
 }
 
-/// Upkeep: memberships whose invoices were paid count, and members whose memberships ended lapse, each workspace on
-/// its own day.
-pub async fn maintenance(k: &Kernel) -> Result<()> {
-    upkeep(k, None).await
+/// Upkeep, for one workspace: memberships whose invoices were paid count, and members whose memberships ended lapse, on
+/// the workspace's own day.
+pub async fn maintenance(k: &Kernel, tenant: Uuid) -> Result<()> {
+    upkeep(k, tenant, None).await
 }
 
-/// [`maintenance`] as if every workspace's day were `today`.
-pub async fn maintenance_on(k: &Kernel, today: NaiveDate) -> Result<()> {
-    upkeep(k, Some(today)).await
+/// [`maintenance`] as if the workspace's day were `today`.
+pub async fn maintenance_on(k: &Kernel, tenant: Uuid, today: NaiveDate) -> Result<()> {
+    upkeep(k, tenant, Some(today)).await
 }
 
-async fn upkeep(k: &Kernel, on: Option<NaiveDate>) -> Result<()> {
-    let mut tx = k.db.system_tx().await?;
-    let tenants: Vec<Uuid> = sqlx::query_scalar("select id from tenant where status = 'active' order by id").fetch_all(&mut *tx).await?;
-    tx.commit().await?;
-    let mut first_error: Option<Error> = None;
-    for tenant in tenants {
-        match k.registry.schema(tenant).await {
-            Ok(s) if s.packages.iter().any(|p| p == "nonprofit") => {
-                if let Err(e) = members::upkeep(k, tenant, s, on).await {
-                    first_error.get_or_insert(e);
-                }
-            }
-            Ok(_) => {}
-            Err(e) => {
-                first_error.get_or_insert(e);
-            }
-        }
-    }
-    first_error.map_or(Ok(()), Err)
+async fn upkeep(k: &Kernel, tenant: Uuid, on: Option<NaiveDate>) -> Result<()> {
+    members::upkeep(k, tenant, k.registry.schema(tenant).await?, on).await
 }
 
 /// A date field.
